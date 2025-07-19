@@ -1,0 +1,96 @@
+import React, { useState } from 'react';
+import axios from 'axios';
+import DatePicker from "react-multi-date-picker";
+
+
+const AbsenceChecker = () => {
+  const [futureAbsences, setFutureAbsences] = useState([]);
+  const [predicted, setPredicted] = useState([]);
+  const [semesterExists, setSemesterExists] = useState(true);
+
+  const handleSubmit = async () => {
+    try {
+      const res = await axios.post('http://localhost:5000/api/semester/future', {
+        futureAbsences,
+      });
+      setPredicted(res.data);
+    } catch (err) {
+      console.error(err);
+      setSemesterExists(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 py-10">
+      <div className="max-w-4xl mx-auto p-8 bg-white/90 rounded-2xl shadow-2xl border border-blue-200">
+        <h2 className="text-3xl font-extrabold text-blue-700 mb-6 text-center drop-shadow">
+          Future Absence Checker
+        </h2>
+
+        {semesterExists ? (
+          <>
+            <label className="block text-gray-700 font-semibold mb-2">
+              Enter Future Absence Dates <span className="text-blue-500">(select multiple)</span>
+            </label>
+              <DatePicker
+             multiple
+            value={futureAbsences}
+              onChange={dates => setFutureAbsences(dates.map(d => d.format("YYYY-MM-DD")))}
+              format="YYYY-MM-DD"
+            className="w-full p-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 mb-6 bg-blue-50 placeholder:text-blue-300" 
+              placeholder="Select future absence dates"
+                    />
+
+            <button
+              onClick={handleSubmit}
+              className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white font-bold py-3 rounded-lg shadow hover:from-blue-600 hover:to-pink-600 transition mb-4"
+            >
+              Predict Attendance Impact
+            </button>
+
+            {predicted.length > 0 && (
+              <div className="mt-8">
+                <h3 className="text-xl font-bold text-purple-700 mb-4">Predicted Attendance:</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse rounded-xl overflow-hidden shadow">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 text-white">
+                        <th className="border border-blue-200 px-4 py-2 text-left">Subject</th>
+                        <th className="border border-blue-200 px-4 py-2 text-left">Total</th>
+                        <th className="border border-blue-200 px-4 py-2 text-left">Attended</th>
+                        <th className="border border-blue-200 px-4 py-2 text-left">Missed</th>
+                        <th className="border border-blue-200 px-4 py-2 text-left">%</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {predicted.map((a, idx) => (
+                        <tr
+                          key={idx}
+                          className={`${
+                            idx % 2 === 0 ? 'bg-blue-50' : 'bg-pink-50'
+                          } hover:bg-purple-100 transition`}
+                        >
+                          <td className="border border-blue-100 px-4 py-2 font-semibold text-blue-700">{a.subject}</td>
+                          <td className="border border-blue-100 px-4 py-2">{a.total}</td>
+                          <td className="border border-blue-100 px-4 py-2">{a.attended}</td>
+                          <td className="border border-blue-100 px-4 py-2">{a.missed}</td>
+                          <td className="border border-blue-100 px-4 py-2 font-bold">{a.percentage}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-red-600 font-semibold text-center">
+            Please set up your current semester first in the other tab.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default AbsenceChecker;
